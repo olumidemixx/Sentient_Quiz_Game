@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentient Quiz Game</title>
+<link rel="icon" type="image/png" href="dobby.png">
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at center, #1e1e2f, #0c0c1a);
+    color: #fff;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  h1 {
+    text-align: center;
+    color: #9efeff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+  }
+  .dobby-img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+  }
+  #start-screen, #quiz-container, #result {
+    background: rgba(255,255,255,0.05);
+    padding: 25px 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(0,255,255,0.2);
+    max-width: 700px;
+    width: 90%;
+    text-align: center;
+  }
+  #how-it-works {
+    text-align: left;
+    margin-top: 10px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px;
+    display: none;
+  }
+  button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: #00bcd4;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1em;
+    color: #000;
+    transition: 0.3s;
+  }
+  button:hover { background: #03a9f4; }
+  .question {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+  }
+  .option {
+    background: #282845;
+    margin: 5px 0;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .option:hover {
+    background: #3aefff;
+    color: #000;
+  }
+  .option.selected {
+    background: #3aefff;
+    color: #000;
+  }
+  .result-item {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    border-left: 4px solid #00bcd4;
+  }
+  @media(max-width:600px){
+    #start-screen, #quiz-container { padding: 15px 20px; }
+    .option { font-size: 0.95em; }
+  }
+</style>
+</head>
+<body>
+
+<h1><img src="dobby.png" alt="Dobby" class="dobby-img">🧠 Sentient Quiz</h1>
+
+<!-- Start Screen -->
+<div id="start-screen">
+  <p>Welcome, traveler! Test your knowledge of <b>Sentient</b> — the open-source decentralized AGI project leading the AI frontier.</p>
+  <button id="how-btn">How It Works</button>
+  <div id="how-it-works">
+    <p>• Each game gives you <b>10 random questions</b> from a pool of 50.</p>
+    <p>• Choose the correct answer from 4 options.</p>
+    <p>• After you finish, see your score and correct answers.</p>
+    <p>• Retaking randomizes a new set of questions each time!</p>
+  </div>
+  <button id="start-btn">Begin Quiz</button>
+</div>
+
+<!-- Quiz Container -->
+<div id="quiz-container" style="display:none;">
+  <div id="quiz"></div>
+  <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+    <button id="prev-btn">Previous</button>
+    <button id="next-btn">Next</button>
+  </div>
+</div>
+
+<!-- Results -->
+<div id="result" style="display:none;"></div>
+
+<script>
+const allQuestions = [
+  {q:"What is Sentient's primary mission?",a:"Sentient builds open-source, decentralized AGI for community ownership.",options:["Sentient builds open-source, decentralized AGI for community ownership.","To create a private AI platform for corporations.","To develop a closed AI for government.","To sell NFTs of AI models."]},
+  {q:"How does Sentient differ from closed AGI systems?",a:"Sentient enables open innovation and community control unlike corporate gatekeepers.",options:["Sentient enables open innovation and community control unlike corporate gatekeepers.","It is closed source and centralized.","It focuses on traditional data centers.","It avoids user collaboration."]},
+  {q:"What funding amount did Sentient secure in its seed round?",a:"Sentient raised $85 million in seed funding.",options:["Sentient raised $85 million in seed funding.","$10 million","$250 million","$5 million"]},
+  {q:"Who co-led Sentient's seed funding round?",a:"Founders Fund, Pantera Capital, and Framework Ventures co-led the round.",options:["Founders Fund, Pantera Capital, and Framework Ventures co-led the round.","Sequoia Capital and a16z.","Binance Labs and Coinbase Ventures.","SoftBank and Lightspeed."]},
+  {q:"Who are Sentient's co-founders?",a:"Sandeep Nailwal and Himanshu Tyagi are the co-founders.",options:["Sandeep Nailwal and Himanshu Tyagi are the co-founders.","Elon Musk and Sam Altman.","Vitalik Buterin and CZ.","Larry Page and Sergey Brin."]},
+  {q:"What is The GRID?",a:"The GRID is an open-source AGI network for AI collaboration.",options:["The GRID is an open-source AGI network for AI collaboration.","A blockchain payment protocol.","A gaming network.","A social media platform."]},
+  {q:"When was The GRID launched?",a:"The GRID launched on August 13, 2025.",options:["The GRID launched on August 13, 2025.","July 10, 2024.","December 1, 2023.","January 5, 2022."]},
+  {q:"What is Sentient Chat?",a:"Sentient Chat is the interface for accessing GRID intelligence.",options:["Sentient Chat is the interface for accessing GRID intelligence.","A chat app for team communication.","An NFT marketplace.","A sentiment analysis tool."]},
+  {q:"What does OML stand for in Sentient?",a:"OML stands for Open, Monetizable, and Loyal models.",options:["Open, Monetizable, and Loyal models.","Open Machine Learning.","Optimized Model Layer.","Operational Model Logic."]},
+  {q:"What is Dobby in Sentient's ecosystem?",a:"Dobby is the first crypto-loyal AI model.",options:["Dobby is the first crypto-loyal AI model.","A blockchain explorer.","A storage server.","A human moderator."]},
+  {q:"Which blockchains does The GRID support?",a:"The GRID supports Base, Polygon, Arbitrum, BNB, Celo, Near.",options:["Base, Polygon, Arbitrum, BNB, Celo, Near.","Only Ethereum.","Only Bitcoin and Solana.","Cardano and Avalanche only."]},
+  {q:"How many users are on Sentient's waitlist?",a:"Sentient has over 2 million waitlisted users.",options:["Sentient has over 2 million waitlisted users.","200,000","50,000","500,000"]},
+  {q:"What is ROMA in Sentient?",a:"ROMA is an open-source meta-agent framework for hierarchical tasks.",options:["ROMA is an open-source meta-agent framework for hierarchical tasks.","An NFT collection.","A wallet app.","A database system."]},
+  {q:"When was ROMA released?",a:"ROMA was released on October 11, 2025.",options:["ROMA was released on October 11, 2025.","May 3, 2024.","June 30, 2023.","March 1, 2022."]},
+  {q:"What is Sentient's Builder Program?",a:"The Builder Program offers $1 million for AI agent developers.",options:["The Builder Program offers $1 million for AI agent developers.","A grant for blockchain nodes.","A scholarship for students.","A charity for AI ethics."]},
+  {q:"Who is Sreeram Kannan in Sentient?",a:"Sreeram Kannan is a founding advisor from EigenLayer.",options:["Sreeram Kannan is a founding advisor from EigenLayer.","The CEO of Sentient.","A UI designer.","A marketing head."]},
+  {q:"What is the SENT token used for?",a:"SENT token fuels incentives and governance in the AGI economy.",options:["SENT token fuels incentives and governance in the AGI economy.","Used as gas for Ethereum.","A meme coin.","A utility for chat payments."]},
+  {q:"How are SENT emissions determined?",a:"Emissions are based on usage, revenue, and expert votes.",options:["Emissions are based on usage, revenue, and expert votes.","By random lottery.","By centralized control.","By transaction volume."]},
+  {q:"What is Sentient's location?",a:"Sentient is based in San Francisco.",options:["Sentient is based in San Francisco.","New York City.","London.","Singapore."]},
+  {q:"Which partner provides web search for Sentient?",a:"Exa provides state-of-the-art web search for LLMs.",options:["Exa provides state-of-the-art web search for LLMs.","Google.","Bing.","DuckDuckGo."]},
+  {q:"What is Napkin in Sentient's ecosystem?",a:"Napkin generates AI diagrams and infographics.",options:["Napkin generates AI diagrams and infographics.","A text editor.","A browser plugin.","A server tool."]},
+  {q:"How many AI agents are in The GRID?",a:"The GRID hosts over 40 AI agents.",options:["The GRID hosts over 40 AI agents.","10","1000","5"]},
+  {q:"What is Caldo?",a:"Caldo is an AI-driven people search platform.",options:["Caldo is an AI-driven people search platform.","An NFT exchange.","A database system.","An operating system."]},
+  {q:"Which blockchain data provider partners with Sentient?",a:"The Graph provides indexed blockchain data.",options:["The Graph provides indexed blockchain data.","Chainlink.","Alchemy.","Infura."]},
+  {q:"What is Kaito?",a:"Kaito supplies crypto social data.",options:["Kaito supplies crypto social data.","A chat bot.","A gaming app.","An analytics dashboard."]},
+  {q:"Who is EigenLayer's role in Sentient?",a:"EigenLayer launches Dobby Judge AI adjudicator.",options:["EigenLayer launches Dobby Judge AI adjudicator.","It provides wallet services.","It audits code.","It handles marketing."]},
+  {q:"What is the Model-Fingerprinting Library?",a:"It embeds custom values into models for loyalty.",options:["It embeds custom values into models for loyalty.","A graphics package.","A sound tool.","An API gateway."]},
+  {q:"What is Open Deep Search Library?",a:"It enables advanced search in Sentient's tools.",options:["It enables advanced search in Sentient's tools.","A web crawler.","A frontend library.","A compression tool."]},
+  {q:"How many data sources in The GRID?",a:"Over 50 data sources are available.",options:["Over 50 data sources are available.","5","500","20"]},
+  {q:"How many models in The GRID?",a:"More than six models are hosted.",options:["More than six models are hosted.","Only one model.","Two models.","100 models."]},
+  {q:"What upcoming feature for GRID nodes?",a:"Self-hosted GRID nodes beta in November 2025.",options:["Self-hosted GRID nodes beta in November 2025.","Cloud-only GRID nodes.","GRID closed beta in 2023.","Private alpha in 2022."]},
+  {q:"What is Sentient's governance model?",a:"Community-owned with decentralized staking and voting.",options:["Community-owned with decentralized staking and voting.","Run by corporate board.","Owned by venture capital.","Directed by a government body."]},
+  {q:"Who are the Reps in SENT economy?",a:"Renowned AI experts vote on emissions.",options:["Renowned AI experts vote on emissions.","Community moderators.","Random validators.","Marketing agents."]},
+  {q:"What is Billions' role with Sentient?",a:"Billions is the identity and reputation partner.",options:["Billions is the identity and reputation partner.","A game publisher.","A web3 wallet.","A cloud provider."]},
+  {q:"Which VC is Andrew Kang from?",a:"Andrew Kang is from Mechanism Capital.",options:["Andrew Kang is from Mechanism Capital.","Pantera Capital.","CoinFund.","Andreessen Horowitz."]},
+  {q:"Who founded Gauntlet?",a:"Tarun Chitra founded Gauntlet.",options:["Tarun Chitra founded Gauntlet.","Sandeep Nailwal.","Vitalik Buterin.","Arthur Hayes."]},
+  {q:"What event featured Sentient in 2025?",a:"Open AGI Summit at EthCC 2025.",options:["Open AGI Summit at EthCC 2025.","AI World Congress.","CES 2025.","Web Summit."]},
+  {q:"What is Messari co-pilot?",a:"It's a crypto insights agent partner.",options:["It's a crypto insights agent partner.","A chatbot.","An NFT dashboard.","An AI hardware vendor."]},
+  {q:"How does staking work in Sentient?",a:"Stake on participants to earn yield.",options:["Stake on participants to earn yield.","Stake to vote on memes.","Stake to gain access.","No staking available."]},
+  {q:"What powers Sentient's decentralization?",a:"Blockchain and open-source models drive it.",options:["Blockchain and open-source models drive it.","Cloud APIs.","Private servers.","Manual moderation."]},
+  {q:"What is Sentient's economic focus?",a:"Building an open AGI economy for creators.",options:["Building an open AGI economy for creators.","Advertising network.","SaaS subscriptions.","NFT royalties."]},
+  {q:"How many partners does GRID have?",a:"Over 110 partners contribute to GRID.",options:["Over 110 partners contribute to GRID.","10","5","2000"]},
+  {q:"What is Fireworks' integration with Sentient?",a:"Fireworks powers decentralized AI at scale.",options:["Fireworks powers decentralized AI at scale.","It provides UI themes.","It supplies analytics.","It hosts the website."]},
+  {q:"What risk does Sentient address?",a:"Corporate control of AGI threatens society.",options:["Corporate control of AGI threatens society.","Blockchain volatility.","AI image copyright.","Internet speed."]},
+  {q:"How does GRID aggregate intelligence?",a:"It chains agents, data, and tools collaboratively.",options:["It chains agents, data, and tools collaboratively.","It merges everything into one AI.","It scrapes websites.","It copies from open AI APIs."]},
+  {q:"What is Sentient's foundation?",a:"Sentient Foundation drives open-source AGI development.",options:["Sentient Foundation drives open-source AGI development.","A charity for education.","An NFT DAO.","A private hedge fund."]},
+  {q:"What historical examples support open-source?",a:"Linux, Android, Kubernetes outperformed closed alternatives.",options:["Linux, Android, Kubernetes outperformed closed alternatives.","Only Windows succeeded.","MacOS dominates AI.","Closed models always win."]},
+  {q:"What is the GRID's interoperability?",a:"Supports Web2, Web3, and multiple blockchains.",options:["Supports Web2, Web3, and multiple blockchains.","Only Web2.","Only Web3.","Only Solana."]},
+  {q:"Who backed Sentient's launch?",a:"Peter Thiel's Founders Fund backed it.",options:["Peter Thiel's Founders Fund backed it.","Binance Labs.","SoftBank.","Coinbase."]},
+  {q:"What is Sentient's 2026 plan?",a:"Enable self-hosted GRID nodes on hardware.",options:["Enable self-hosted GRID nodes on hardware.","Build a social app.","Launch NFTs.","Create VR metaverse."]}
+];
+
+let quizData = [];
+let currentQuestion = 0;
+let score = 0;
+let userAnswers = []; //This track user's answers for each question
+
+const startScreen = document.getElementById("start-screen");
+const quizContainer = document.getElementById("quiz-container");
+const quiz = document.getElementById("quiz");
+const nextBtn = document.getElementById("next-btn");
+const prevBtn = document.getElementById("prev-btn");
+const resultDiv = document.getElementById("result");
+const howBtn = document.getElementById("how-btn");
+const howDiv = document.getElementById("how-it-works");
+const startBtn = document.getElementById("start-btn");
+
+howBtn.addEventListener("click", ()=> {
+ 
+  document.querySelector("#start-screen p").style.display = "none";
+  howBtn.style.display = "none";
+  // This Shows the how it works content
+  howDiv.style.display = "block";
+});
+
+startBtn.addEventListener("click", ()=>{
+  startScreen.style.display = "none";
+  quizContainer.style.display = "block";
+  initializeQuiz();
+  loadQuestion();
+});
+
+function initializeQuiz() {
+  quizData = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
+  currentQuestion = 0;
+  score = 0;
+  userAnswers = new Array(quizData.length).fill(null); // Initialize with null values
+}
+
+function loadQuestion() {
+  const q = quizData[currentQuestion];
+  const shuffled = q.options.sort(() => 0.5 - Math.random());
+  const selectedAnswer = userAnswers[currentQuestion];
+  
+  quiz.innerHTML = `
+    <div class="question">${currentQuestion+1}. ${q.q}</div>
+    <div class="options">
+      ${shuffled.map((opt)=>{
+        const isSelected = selectedAnswer === opt;
+        const cssClass = isSelected ? 'option selected' : 'option';
+        return `<button class="${cssClass}" onclick="selectOption('${opt.replace(/'/g,"&#39;")}', '${q.a.replace(/'/g,"&#39;")}')">${opt}</button>`;
+      }).join("")}
+    </div>`;
+  
+  // Update button visibility
+  prevBtn.style.display = currentQuestion > 0 ? 'block' : 'none';
+  nextBtn.textContent = currentQuestion < quizData.length - 1 ? 'Next' : 'Finish';
+}
+
+function selectOption(selected, correct){
+  // This stores the user's answer
+  userAnswers[currentQuestion] = selected;
+  
+  
+  Array.from(document.getElementsByClassName('option')).forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  
+  // This adds selected class to the clicked option
+  event.target.classList.add('selected');
+}
+
+nextBtn.addEventListener('click', ()=>{
+  if(currentQuestion < quizData.length - 1){
+    currentQuestion++;
+    loadQuestion();
+  } else {
+    showResult();
+  }
+});
+
+prevBtn.addEventListener('click', ()=>{
+  if(currentQuestion > 0){
+    currentQuestion--;
+    loadQuestion();
+  }
+});
+
+function showResult(){
+  // This calculates score based on user answers
+  score = 0;
+  quizData.forEach((q, i) => {
+    if(userAnswers[i] === q.a) {
+      score++;
+    }
+  });
+  
+  quizContainer.style.display = "none";
+  resultDiv.style.display = "block";
+  let html = `<h2>Your Score: ${score}/${quizData.length}</h2><h3>Correct Answers:</h3>`;
+  quizData.forEach((q,i)=>{
+    const userAnswer = userAnswers[i] || "No answer selected";
+    const isCorrect = userAnswers[i] === q.a;
+    const answerClass = isCorrect ? 'color: #4CAF50;' : 'color: #f44336;';
+    html += `<div class="result-item">
+      <strong>Question ${i+1}:</strong> ${q.q}<br><br>
+      <span style="${answerClass}"><b>Your Answer:</b> ${userAnswer}</span><br>
+      <b>Correct Answer:</b> ${q.a}
+    </div>`;
+  });
+  html += `<button id="retake-btn">Retake Quiz</button>`;
+  resultDiv.innerHTML = html;
+  document.getElementById("retake-btn").addEventListener("click", retakeQuiz);
+}
+
+function retakeQuiz(){
+  resultDiv.style.display = "none";
+  quizContainer.style.display = "block";
+  initializeQuiz();
+  loadQuestion();
+}
+</script>
+
+</body>
+</html>
